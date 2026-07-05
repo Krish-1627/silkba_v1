@@ -172,7 +172,6 @@ app.post('/api/chat', async (req, res) => {
         const analystState = JSON.parse(data.choices[0].message.content);
 
         if (Number(analystState.current_question_count) >= 10) {
-            fs.mkdirSync(reportDir, { recursive: true });
             const reportFile = path.join(reportDir, `chat-report-${Date.now()}.json`);
             const fullChat = [
                 ...chatHistory,
@@ -188,6 +187,7 @@ app.post('/api/chat', async (req, res) => {
             };
 
             try {
+                fs.mkdirSync(reportDir, { recursive: true });
                 fs.writeFileSync(reportFile, JSON.stringify(reportPayload, null, 2), 'utf8');
             } catch (fsError) {
                 console.warn("Could not write report file (likely serverless environment):", fsError.message);
