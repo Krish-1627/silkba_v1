@@ -187,7 +187,11 @@ app.post('/api/chat', async (req, res) => {
                 chatHistory: fullChat
             };
 
-            fs.writeFileSync(reportFile, JSON.stringify(reportPayload, null, 2), 'utf8');
+            try {
+                fs.writeFileSync(reportFile, JSON.stringify(reportPayload, null, 2), 'utf8');
+            } catch (fsError) {
+                console.warn("Could not write report file (likely serverless environment):", fsError.message);
+            }
         }
 
         res.json(analystState);
@@ -201,4 +205,8 @@ app.post('/api/chat', async (req, res) => {
 });
 
 const PORT = Number(process.env.PORT) || 3000;
-app.listen(PORT, () => console.log(`Silk Analyst Backend Live on http://localhost:${PORT}`));
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => console.log(`Silk Analyst Backend Live on http://localhost:${PORT}`));
+}
+
+export default app;
