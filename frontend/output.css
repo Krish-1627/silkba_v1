@@ -952,6 +952,10 @@ video {
   padding: 1.25rem;
 }
 
+.p-6 {
+  padding: 1.5rem;
+}
+
 .px-2 {
   padding-left: 0.5rem;
   padding-right: 0.5rem;
@@ -965,11 +969,6 @@ video {
 .px-5 {
   padding-left: 1.25rem;
   padding-right: 1.25rem;
-}
-
-.px-6 {
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
 }
 
 .py-1 {
@@ -1021,6 +1020,11 @@ video {
   line-height: 1.5rem;
 }
 
+.text-lg {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+
 .text-sm {
   font-size: 0.875rem;
   line-height: 1.25rem;
@@ -1063,11 +1067,6 @@ video {
   letter-spacing: 0.05em;
 }
 
-.text-\[\#1F2540\] {
-  --tw-text-opacity: 1;
-  color: rgb(31 37 64 / var(--tw-text-opacity, 1));
-}
-
 .text-\[\#2FB5AA\] {
   --tw-text-opacity: 1;
   color: rgb(47 181 170 / var(--tw-text-opacity, 1));
@@ -1078,14 +1077,14 @@ video {
   color: rgb(0 0 0 / var(--tw-text-opacity, 1));
 }
 
-.placeholder-\[\#1F2540\]::-moz-placeholder {
+.placeholder-black::-moz-placeholder {
   --tw-placeholder-opacity: 1;
-  color: rgb(31 37 64 / var(--tw-placeholder-opacity, 1));
+  color: rgb(0 0 0 / var(--tw-placeholder-opacity, 1));
 }
 
-.placeholder-\[\#1F2540\]::placeholder {
+.placeholder-black::placeholder {
   --tw-placeholder-opacity: 1;
-  color: rgb(31 37 64 / var(--tw-placeholder-opacity, 1));
+  color: rgb(0 0 0 / var(--tw-placeholder-opacity, 1));
 }
 
 .opacity-0 {
@@ -1171,11 +1170,6 @@ video {
 }
 
 @media (min-width: 640px) {
-  .sm\:text-base {
-    font-size: 1rem;
-    line-height: 1.5rem;
-  }
-
   .sm\:text-xl {
     font-size: 1.25rem;
     line-height: 1.75rem;

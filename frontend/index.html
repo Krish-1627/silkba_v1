@@ -86,11 +86,11 @@
     </style>
 </head>
 
-<body class="bg-[#D9E2E7] text-[#1F2540] font-sans h-[100dvh] overflow-hidden flex flex-col">
+<body class="bg-[#D9E2E7] text-black font-sans h-[100dvh] overflow-hidden flex flex-col">
 
     <header class="bg-[#D9E2E7] border-b border-[#2FB5AA] p-4 shadow-sm">
         <div class="max-w-7xl mx-auto flex items-center justify-center">
-            <h1 class="text-[15px] sm:text-xl font-bold tracking-wide text-[#1F2540] text-center whitespace-nowrap">
+            <h1 class="text-[15px] sm:text-xl font-bold tracking-wide text-black text-center whitespace-nowrap">
                 Silk<span class="text-[#2FB5AA]">Optima</span> Business X-Ray</h1>
         </div>
     </header>
@@ -98,11 +98,11 @@
     <div class="lg:hidden bg-[#D9E2E7] border-b border-[#2FB5AA] px-4 pt-3 pb-2">
         <div class="max-w-7xl mx-auto grid grid-cols-2 gap-2">
             <button id="tabChatBtn" type="button"
-                class="border rounded-lg py-2 text-sm font-semibold transition-colors bg-[#2FB5AA] text-[#1F2540] border-transparent">
+                class="border rounded-lg py-2 text-sm font-semibold transition-colors bg-[#2FB5AA] text-black border-transparent">
                 Chat
             </button>
             <button id="tabAnalysisBtn" type="button"
-                class="border rounded-lg py-2 text-sm font-semibold transition-colors bg-[#E8F7F6] text-[#1F2540] border-[#2FB5AA]">
+                class="border rounded-lg py-2 text-sm font-semibold transition-colors bg-[#E8F7F6] text-black border-[#2FB5AA]">
                 Analysis
             </button>
         </div>
@@ -113,7 +113,7 @@
         <section id="xrayPanel"
             class="hidden lg:col-span-1 min-h-0 bg-[#E8F7F6] rounded-xl p-5 border border-[#2FB5AA] lg:flex flex-col space-y-6 shadow-sm overflow-hidden">
             <div>
-                <h2 class="text-sm font-semibold text-[#1F2540] uppercase tracking-wider mb-3">X ray clarity possibility
+                <h2 class="text-sm font-semibold text-black uppercase tracking-wider mb-3">X ray clarity possibility
                 </h2>
                 <div class="space-y-4" id="scoreDashboard">
                     <div>
@@ -160,9 +160,9 @@
             </div>
 
             <div class="border-t border-[#2FB5AA] pt-4 flex-1 flex flex-col min-h-0">
-                <h2 class="text-sm font-semibold text-[#1F2540] uppercase tracking-wider mb-3">Deduced Facts Stack</h2>
+                <h2 class="text-sm font-semibold text-black uppercase tracking-wider mb-3">Deduced Facts Stack</h2>
                 <div id="factsContainer" class="flex-1 overflow-y-auto space-y-2 text-xs">
-                    <p class="text-[#1F2540] italic">No operational factual patterns mapped yet. Start speaking with the
+                    <p class="text-black italic">No operational factual patterns mapped yet. Start speaking with the
                         analyst...</p>
                 </div>
             </div>
@@ -175,17 +175,17 @@
             </div>
 
             <div id="loadingIndicator"
-                class="hidden px-5 py-2 text-xs text-[#1F2540] items-center space-x-2 animate-pulse bg-[#E8F7F6] border-t border-[#2FB5AA]">
+                class="hidden px-5 py-2 text-xs text-black items-center space-x-2 animate-pulse bg-[#E8F7F6] border-t border-[#2FB5AA]">
                 <div class="h-1.5 w-1.5 bg-[#2FB5AA] rounded-full animate-ping"></div>
                 <span>Analyst checking structural matrices and formatting operational logic...</span>
             </div>
 
             <form id="chatForm" class="p-4 bg-[#E8F7F6] border-t border-[#2FB5AA] flex items-end space-x-3">
                 <textarea id="userInput" rows="1" placeholder="Type your response here..." required
-                    class="flex-1 bg-[#D9E2E7] border border-[#2FB5AA] rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#2FB5AA] text-[#1F2540] placeholder-[#1F2540] overflow-hidden max-h-32 resize-none"
+                    class="flex-1 bg-[#D9E2E7] border border-[#2FB5AA] rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#2FB5AA] text-black placeholder-black overflow-hidden max-h-32 resize-none"
                     style="min-height: 46px;"></textarea>
                 <button type="submit" id="sendBtn" aria-label="Send" title="Send"
-                    class="bg-[#2FB5AA] hover:bg-[#25A298] text-[#1F2540] font-semibold text-sm px-5 py-3 rounded-lg shadow-md transition-all flex items-center justify-center mb-[2px]">
+                    class="bg-[#2FB5AA] hover:bg-[#25A298] text-black font-semibold text-sm px-5 py-3 rounded-lg shadow-md transition-all flex items-center justify-center mb-[2px]">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"
                         aria-hidden="true">
                         <path
@@ -194,7 +194,7 @@
                 </button>
             </form>
             <div id="completionBanner" class="hidden flex-1 items-center justify-center p-6 text-center">
-                <p class="text-[#1F2540] font-medium text-lg">
+                <p class="text-black font-medium text-lg">
                     Thankyou for your time. Analysis report will be sent to the adminstration
                 </p>
             </div>
@@ -225,17 +225,17 @@
             if (!tabChatBtn || !tabAnalysisBtn) return;
             const isChat = tab === 'chat';
             tabChatBtn.classList.toggle('bg-[#2FB5AA]', isChat);
-            tabChatBtn.classList.toggle('text-[#1F2540]', isChat);
+            tabChatBtn.classList.toggle('text-black', isChat);
             tabChatBtn.classList.toggle('border-transparent', isChat);
             tabChatBtn.classList.toggle('bg-[#E8F7F6]', !isChat);
-            tabChatBtn.classList.toggle('text-[#1F2540]', !isChat);
+            tabChatBtn.classList.toggle('text-black', !isChat);
             tabChatBtn.classList.toggle('border-[#2FB5AA]', !isChat);
 
             tabAnalysisBtn.classList.toggle('bg-[#2FB5AA]', !isChat);
-            tabAnalysisBtn.classList.toggle('text-[#1F2540]', !isChat);
+            tabAnalysisBtn.classList.toggle('text-black', !isChat);
             tabAnalysisBtn.classList.toggle('border-transparent', !isChat);
             tabAnalysisBtn.classList.toggle('bg-[#E8F7F6]', isChat);
-            tabAnalysisBtn.classList.toggle('text-[#1F2540]', isChat);
+            tabAnalysisBtn.classList.toggle('text-black', isChat);
             tabAnalysisBtn.classList.toggle('border-[#2FB5AA]', isChat);
         }
 
@@ -300,8 +300,8 @@
                 
                 if (msg.role === 'assistant') {
                     wrapper.innerHTML = `
-                        <div class="bg-[#2FB5AA] border border-[#2FB5AA] text-[#1F2540] font-bold p-2 rounded-lg text-xs tracking-wider mt-1">Silk</div>
-                        <div class="bg-[#2FB5AA] border border-[#2FB5AA] p-4 rounded-xl text-sm leading-relaxed shadow-sm text-[#1F2540] break-words break-all">
+                        <div class="bg-[#2FB5AA] border border-[#2FB5AA] text-black font-bold p-2 rounded-lg text-xs tracking-wider mt-1">Silk</div>
+                        <div class="bg-[#2FB5AA] border border-[#2FB5AA] p-4 rounded-xl text-sm leading-relaxed shadow-sm text-black break-words break-all">
                             ${msg.text.replace(/\n/g, '<br>')}
                         </div>
                     `;
@@ -309,20 +309,20 @@
                     wrapper.innerHTML = `
                         <div class="flex-1 flex flex-col items-end">
                             <div class="relative group" id="msg-wrapper-${index}">
-                                <button onclick="editMessage(${index})" class="absolute -left-10 top-2 p-1.5 bg-[#D9E2E7] text-[#1F2540] rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#2FB5AA] shadow-sm" title="Edit message">
+                                <button onclick="editMessage(${index})" class="absolute -left-10 top-2 p-1.5 bg-[#D9E2E7] text-black rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#2FB5AA] shadow-sm" title="Edit message">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
                                       <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
                                     </svg>
                                 </button>
-                                <div class="bg-[#2FB5AA] p-4 rounded-xl text-sm leading-relaxed shadow-sm text-[#1F2540] break-words break-all" id="msg-content-${index}">
+                                <div class="bg-[#2FB5AA] p-4 rounded-xl text-sm leading-relaxed shadow-sm text-black break-words break-all" id="msg-content-${index}">
                                     ${msg.text.replace(/\n/g, '<br>')}
                                 </div>
                             </div>
                             <div id="edit-box-${index}" class="hidden w-full max-w-3xl mt-2 flex flex-col bg-[#F3F4F6] rounded-3xl p-3 shadow-sm border border-gray-200">
-                                <textarea id="edit-input-${index}" rows="1" class="w-full bg-transparent border-none px-2 py-1 text-sm focus:outline-none focus:ring-0 text-[#1F2540] resize-none" style="outline:none; box-shadow:none;"></textarea>
+                                <textarea id="edit-input-${index}" rows="1" class="w-full bg-transparent border-none px-2 py-1 text-sm focus:outline-none focus:ring-0 text-black resize-none" style="outline:none; box-shadow:none;"></textarea>
                                 <div class="flex justify-end space-x-2 mt-2">
                                     <button onclick="cancelEdit(${index})" class="px-4 py-1.5 text-sm font-medium text-black bg-white border border-gray-300 hover:bg-gray-50 rounded-full transition-colors">Cancel</button>
-                                    <button onclick="saveEdit(${index})" class="px-4 py-1.5 text-sm font-medium text-[#1F2540] bg-[#2FB5AA] hover:bg-[#25A298] rounded-full shadow-sm transition-colors">Send</button>
+                                    <button onclick="saveEdit(${index})" class="px-4 py-1.5 text-sm font-medium text-black bg-[#2FB5AA] hover:bg-[#25A298] rounded-full shadow-sm transition-colors">Send</button>
                                 </div>
                             </div>
                         </div>
@@ -479,7 +479,7 @@
                 factsContainer.innerHTML = '';
                 globalDeducedFacts.forEach(fact => {
                     const factItem = document.createElement('div');
-                    factItem.className = "bg-[#E8F7F6] border border-[#2FB5AA] text-[#1F2540] p-2.5 rounded-md flex items-center space-x-2 font-medium shadow-sm hover:border-[#25A298] transition-all mb-2";
+                    factItem.className = "bg-[#E8F7F6] border border-[#2FB5AA] text-black p-2.5 rounded-md flex items-center space-x-2 font-medium shadow-sm hover:border-[#25A298] transition-all mb-2";
                     factItem.innerHTML = `<span class="text-[#2FB5AA] text-base">✓</span> <span>${fact}</span>`;
                     factsContainer.appendChild(factItem);
                 });
