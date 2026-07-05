@@ -1,6 +1,5 @@
 import express from 'express';
 import cors from 'cors';
-import { GoogleGenAI, Type } from '@google/genai';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -14,73 +13,79 @@ const __dirname = path.dirname(__filename);
 const frontendDir = path.resolve(__dirname, '../frontend');
 app.use(express.static(frontendDir));
 
-// Initialize the Google Gen AI SDK
-// Reads API key from env or key.txt and tolerates common formats like GEMINI_API_KEY=... or quoted values.
-function extractApiKey(rawValue) {
-    if (!rawValue || typeof rawValue !== 'string') return '';
+let AZURE_OPENAI_KEY = '';
+let AZURE_OPENAI_ENDPOINT = '';
+let AZURE_DEPLOYMENT_NAME = '';
 
-    const trimmed = rawValue.trim();
-    const firstLine = trimmed.split(/\r?\n/).find(line => line.trim())?.trim() || '';
-    const valuePart = firstLine.includes('=') ? firstLine.split('=').slice(1).join('=').trim() : firstLine;
-    const unquoted = valuePart.replace(/^['\"]|['\"]$/g, '').trim();
-
-    // Support both classic Google API keys (AIza...) and newer token-style keys (AQ....).
-    const explicitMatch = unquoted.match(/(?:AIza[0-9A-Za-z_-]{20,}|AQ\.[0-9A-Za-z._-]{20,})/);
-    if (explicitMatch) return explicitMatch[0];
-
-    // Fallback for key files that include only the raw token value.
-    return /^[0-9A-Za-z._-]{20,}$/.test(unquoted) ? unquoted : '';
-}
-
-function resolveGeminiApiKey() {
-    const envKey = extractApiKey(process.env.GEMINI_API_KEY || '');
-    if (envKey) return envKey;
+function loadAzureConfig() {
+    AZURE_OPENAI_KEY = process.env.AZURE_OPENAI_KEY || '';
+    AZURE_OPENAI_ENDPOINT = process.env.AZURE_OPENAI_ENDPOINT || '';
+    AZURE_DEPLOYMENT_NAME = process.env.AZURE_DEPLOYMENT_NAME || '';
 
     const keyFilePath = path.join(__dirname, 'key.txt');
-    if (!fs.existsSync(keyFilePath)) return '';
-
-    const fileValue = fs.readFileSync(keyFilePath, 'utf8');
-    return extractApiKey(fileValue);
+    if (fs.existsSync(keyFilePath)) {
+        const fileContent = fs.readFileSync(keyFilePath, 'utf8');
+        const lines = fileContent.split(/\r?\n/);
+        lines.forEach(line => {
+            const trimmed = line.trim();
+            if (!trimmed || trimmed.startsWith('#')) return;
+            const parts = trimmed.split('=');
+            if (parts.length >= 2) {
+                const key = parts[0].trim();
+                const value = parts.slice(1).join('=').trim();
+                if (key === 'AZURE_OPENAI_KEY') AZURE_OPENAI_KEY = value;
+                else if (key === 'AZURE_OPENAI_ENDPOINT') AZURE_OPENAI_ENDPOINT = value;
+                else if (key === 'AZURE_DEPLOYMENT_NAME') AZURE_DEPLOYMENT_NAME = value;
+            }
+        });
+    }
 }
 
-const GEMINI_API_KEY = resolveGeminiApiKey();
-const ai = GEMINI_API_KEY ? new GoogleGenAI({ apiKey: GEMINI_API_KEY }) : null;
+loadAzureConfig();
 const reportDir = path.join(__dirname, 'report');
 
-// Define the strict Akinator State JSON Response Schema
+// Log API key status on startup
+if (AZURE_OPENAI_KEY) {
+    console.log(`✓ Azure OpenAI Key loaded successfully (${AZURE_OPENAI_KEY.substring(0, 10)}...)`);
+} else {
+    console.warn('✗ Azure OpenAI Key NOT found - check key.txt');
+}
+
+// Define the strict Akinator State JSON Response Schema for OpenAI Structured Outputs
 const businessAnalystSchema = {
-    type: Type.OBJECT,
+    type: "object",
     properties: {
         deduced_operational_facts: {
-            type: Type.ARRAY,
-            items: { type: Type.STRING },
+            type: "array",
+            items: { type: "string" },
             description: "List of all concrete business problems, tools, software, or process roadblocks uncovered so far."
         },
         xray_pillar_clarity_scores: {
-            type: Type.OBJECT,
+            type: "object",
             properties: {
-                Processes: { type: Type.INTEGER, description: "Clarity percentage on workflows and manual friction." },
-                Systems: { type: Type.INTEGER, description: "Clarity percentage on software and disconnected tool dependencies." },
-                Data_Information: { type: Type.INTEGER, description: "Clarity percentage on patchy visibility and reporting delay gaps." },
-                People: { type: Type.INTEGER, description: "Clarity percentage on team overstretch or communication silos." },
-                Performance: { type: Type.INTEGER, description: "Clarity percentage on lost hours, financial errors, or metrics." }
+                Processes: { type: "integer", description: "Clarity percentage on workflows and manual friction." },
+                Systems: { type: "integer", description: "Clarity percentage on software and disconnected tool dependencies." },
+                Data_Information: { type: "integer", description: "Clarity percentage on patchy visibility and reporting delay gaps." },
+                People: { type: "integer", description: "Clarity percentage on team overstretch or communication silos." },
+                Performance: { type: "integer", description: "Clarity percentage on lost hours, financial errors, or metrics." }
             },
-            required: ["Processes", "Systems", "Data_Information", "People", "Performance"]
+            required: ["Processes", "Systems", "Data_Information", "People", "Performance"],
+            additionalProperties: false
         },
         current_question_count: {
-            type: Type.INTEGER,
+            type: "integer",
             description: "Increment by 1 at every turn of the interview."
         },
         next_logical_target: {
-            type: Type.STRING,
+            type: "string",
             description: "The Business X-Ray pillar with the lowest clarity score that needs immediate probing next."
         },
         is_absurd_or_meaningless_input: {
-            type: Type.BOOLEAN,
+            type: "boolean",
             description: "Set to true if the user's latest message contains gibberish, jokes, or completely off-topic words."
         },
         natural_analyst_response: {
-            type: Type.STRING,
+            type: "string",
             description: "Your human-sounding response. Keep it ultra-short and simple (maximum 1-2 short sentences). Empathetically acknowledge user input in 5-8 words, then ask ONE exceptionally direct, single-focus question."
         }
     },
@@ -91,7 +96,8 @@ const businessAnalystSchema = {
         "next_logical_target",
         "is_absurd_or_meaningless_input",
         "natural_analyst_response"
-    ]
+    ],
+    additionalProperties: false
 };
 
 const SYSTEM_INSTRUCTION = `
@@ -108,9 +114,9 @@ CORE OPERATIONAL RULES:
 
 app.post('/api/chat', async (req, res) => {
     try {
-        if (!ai) {
+        if (!AZURE_OPENAI_KEY || !AZURE_OPENAI_ENDPOINT) {
             return res.status(500).json({
-                error: "Gemini API key missing or invalid format. Put only the raw API key in key.txt or set GEMINI_API_KEY."
+                error: "Azure OpenAI key or endpoint missing. Check key.txt."
             });
         }
 
@@ -120,26 +126,50 @@ app.post('/api/chat', async (req, res) => {
             return res.status(400).json({ error: "Missing or malformed chatHistory array" });
         }
 
-        // Map frontend message objects to Content objects needed by the SDK
-        const contents = chatHistory.map(msg => ({
-            role: msg.role === 'assistant' ? 'model' : 'user',
-            parts: [{ text: msg.text }]
-        }));
+        // Map frontend message objects to OpenAI chat format
+        const messages = [
+            { role: "system", content: SYSTEM_INSTRUCTION },
+            ...chatHistory.map(msg => ({
+                role: msg.role === 'assistant' ? 'assistant' : 'user',
+                content: msg.text
+            }))
+        ];
 
-        // Call Gemini 2.5 Flash API with strict JSON schema formatting
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: contents,
-            config: {
-                systemInstruction: SYSTEM_INSTRUCTION,
-                responseMimeType: 'application/json',
-                responseSchema: businessAnalystSchema,
-                temperature: 0.2, // Kept low for highly structured, predictable decision paths
+
+
+        const apiUrl = AZURE_OPENAI_ENDPOINT;
+
+        const requestBody = {
+            messages: messages,
+            temperature: 0.2,
+            response_format: {
+                type: "json_schema",
+                json_schema: {
+                    name: "business_analyst",
+                    strict: true,
+                    schema: businessAnalystSchema
+                }
             }
+        };
+
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'api-key': AZURE_OPENAI_KEY
+            },
+            body: JSON.stringify(requestBody)
         });
 
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(`OpenAI API Error (${response.status}): ${errText}`);
+        }
+
+        const data = await response.json();
+        
         // Parse and return the structured state machine response directly to frontend
-        const analystState = JSON.parse(response.text);
+        const analystState = JSON.parse(data.choices[0].message.content);
 
         if (Number(analystState.current_question_count) >= 10) {
             fs.mkdirSync(reportDir, { recursive: true });
@@ -165,13 +195,8 @@ app.post('/api/chat', async (req, res) => {
     } catch (error) {
         console.error("API Processing Error:", error);
         const errorText = (error && typeof error.message === 'string') ? error.message : '';
-        if (errorText.includes('API key not valid')) {
-            return res.status(401).json({
-                error: "Gemini API key rejected. Replace key.txt with a valid API key value."
-            });
-        }
 
-        res.status(500).json({ error: "Internal Analyst Engine Error" });
+        res.status(500).json({ error: "Internal Analyst Engine Error: " + (errorText || "Unknown error") });
     }
 });
 

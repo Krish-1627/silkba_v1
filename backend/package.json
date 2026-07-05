@@ -12,7 +12,6 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "@google/genai": "^2.7.0",
     "cors": "^2.8.6",
     "express": "^5.2.1"
   }

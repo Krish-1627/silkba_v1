@@ -71,6 +71,10 @@
         #chatFeed::-webkit-scrollbar-thumb:hover {
             background: #25A298;
         }
+        
+        textarea {
+            resize: none;
+        }
     </style>
 </head>
 
@@ -159,16 +163,7 @@
         <section id="chatSection"
             class="lg:col-span-2 min-h-0 bg-[#E8F7F6] rounded-xl border border-[#2FB5AA] flex lg:flex flex-col shadow-sm overflow-hidden">
             <div id="chatFeed" class="flex-1 min-h-0 p-5 overflow-y-auto overscroll-contain space-y-4">
-                <div class="flex items-start space-x-3 max-w-[85%]">
-                    <div
-                        class="bg-[#2FB5AA] border border-[#2FB5AA] text-[#1F2540] font-bold p-2 rounded-lg text-xs tracking-wider">
-                        Silk</div>
-                    <div
-                        class="bg-[#2FB5AA] border border-[#2FB5AA] p-4 rounded-xl text-sm leading-relaxed shadow-sm text-[#000000]">
-                        Hello! I am a business analyst from Silk. To kick off our Business X-Ray diagnostic, could you
-                        share what major problem or operational challenge your organization is currently facing?
-                    </div>
-                </div>
+                <!-- Chat feed dynamically generated -->
             </div>
 
             <div id="loadingIndicator"
@@ -177,11 +172,12 @@
                 <span>Analyst checking structural matrices and formatting operational logic...</span>
             </div>
 
-            <form id="chatForm" class="p-4 bg-[#E8F7F6] border-t border-[#2FB5AA] flex items-center space-x-3">
-                <input type="text" id="userInput" placeholder="Type your response here..." required
-                    class="flex-1 bg-[#D9E2E7] border border-[#2FB5AA] rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#2FB5AA] text-[#1F2540] placeholder-[#1F2540]">
+            <form id="chatForm" class="p-4 bg-[#E8F7F6] border-t border-[#2FB5AA] flex items-end space-x-3">
+                <textarea id="userInput" rows="1" placeholder="Type your response here..." required
+                    class="flex-1 bg-[#D9E2E7] border border-[#2FB5AA] rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#2FB5AA] text-[#1F2540] placeholder-[#1F2540] overflow-hidden max-h-32"
+                    style="min-height: 46px;"></textarea>
                 <button type="submit" id="sendBtn" aria-label="Send" title="Send"
-                    class="bg-[#2FB5AA] hover:bg-[#25A298] text-[#1F2540] font-semibold text-sm px-5 py-3 rounded-lg shadow-md transition-all flex items-center justify-center">
+                    class="bg-[#2FB5AA] hover:bg-[#25A298] text-[#1F2540] font-semibold text-sm px-5 py-3 rounded-lg shadow-md transition-all flex items-center justify-center mb-[2px]">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"
                         aria-hidden="true">
                         <path
@@ -202,20 +198,19 @@
         const chatSection = document.getElementById('chatSection');
         const tabChatBtn = document.getElementById('tabChatBtn');
         const tabAnalysisBtn = document.getElementById('tabAnalysisBtn');
+        const sendBtn = document.getElementById('sendBtn');
         const API_BASE_URL = window.location.port === '5500' ? 'http://localhost:3000' : '';
         let interviewComplete = false;
         let activeMobileTab = 'chat';
 
-        // Track standard state logs inside client side memory
         let localChatHistory = [
             { role: "assistant", text: "Hello! I am a business analyst from Silk. To kick off our Business X-Ray diagnostic, could you share what major problem or operational challenge your organization is currently facing?" }
         ];
+        const globalDeducedFacts = new Set();
 
         function setActiveTabButtonStyles(tab) {
             if (!tabChatBtn || !tabAnalysisBtn) return;
-
             const isChat = tab === 'chat';
-
             tabChatBtn.classList.toggle('bg-[#2FB5AA]', isChat);
             tabChatBtn.classList.toggle('text-[#1F2540]', isChat);
             tabChatBtn.classList.toggle('border-transparent', isChat);
@@ -263,23 +258,159 @@
         window.addEventListener('resize', syncMobileLayout);
         syncMobileLayout();
 
+        // Auto-expanding text area
+        userInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+            if (this.scrollHeight > 128) {
+                this.style.overflowY = 'auto';
+            } else {
+                this.style.overflowY = 'hidden';
+            }
+        });
+
+        // Submit on enter
+        userInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (this.value.trim() !== '') {
+                    sendBtn.click();
+                }
+            }
+        });
+
+        function renderChatFeed() {
+            chatFeed.innerHTML = '';
+            localChatHistory.forEach((msg, index) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = `flex items-start space-x-3 max-w-[85%] ${msg.role === 'user' ? 'ml-auto justify-end group' : ''}`;
+                
+                if (msg.role === 'assistant') {
+                    wrapper.innerHTML = `
+                        <div class="bg-[#2FB5AA] border border-[#2FB5AA] text-[#1F2540] font-bold p-2 rounded-lg text-xs tracking-wider mt-1">Silk</div>
+                        <div class="bg-[#2FB5AA] border border-[#2FB5AA] p-4 rounded-xl text-sm leading-relaxed shadow-sm text-[#000000]">
+                            ${msg.text.replace(/\n/g, '<br>')}
+                        </div>
+                    `;
+                } else {
+                    wrapper.innerHTML = `
+                        <div class="flex-1 flex flex-col items-end">
+                            <div class="relative group" id="msg-wrapper-${index}">
+                                <button onclick="editMessage(${index})" class="absolute -left-10 top-2 p-1.5 bg-[#D9E2E7] text-[#1F2540] rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#2FB5AA] shadow-sm" title="Edit message">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                      <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
+                                    </svg>
+                                </button>
+                                <div class="bg-[#E8F7F6] border border-[#2FB5AA] p-4 rounded-xl text-sm leading-relaxed shadow-sm text-[#1F2540]" id="msg-content-${index}">
+                                    ${msg.text.replace(/\n/g, '<br>')}
+                                </div>
+                            </div>
+                            <div id="edit-box-${index}" class="hidden w-full max-w-3xl mt-2 flex flex-col bg-[#F3F4F6] rounded-3xl p-3 shadow-sm border border-gray-200">
+                                <textarea id="edit-input-${index}" rows="1" class="w-full bg-transparent border-none px-2 py-1 text-sm focus:outline-none focus:ring-0 text-[#1F2540] resize-none" style="outline:none; box-shadow:none;"></textarea>
+                                <div class="flex justify-end space-x-2 mt-2">
+                                    <button onclick="cancelEdit(${index})" class="px-4 py-1.5 text-sm font-medium text-black bg-white border border-gray-300 hover:bg-gray-50 rounded-full transition-colors">Cancel</button>
+                                    <button onclick="saveEdit(${index})" class="px-4 py-1.5 text-sm font-medium text-white bg-black hover:bg-gray-800 rounded-full shadow-sm transition-colors">Send</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                chatFeed.appendChild(wrapper);
+            });
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            setTimeout(() => {
+                chatFeed.scrollTo({
+                    top: chatFeed.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }, 50);
+        }
+
+        window.editMessage = function(index) {
+            document.getElementById(`msg-wrapper-${index}`).classList.add('hidden');
+            const editBox = document.getElementById(`edit-box-${index}`);
+            editBox.classList.remove('hidden');
+            const editInput = document.getElementById(`edit-input-${index}`);
+            editInput.value = localChatHistory[index].text;
+            editInput.focus();
+            
+            editInput.style.height = 'auto';
+            editInput.style.height = (editInput.scrollHeight) + 'px';
+            editInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+        };
+
+        window.cancelEdit = function(index) {
+            document.getElementById(`msg-wrapper-${index}`).classList.remove('hidden');
+            document.getElementById(`edit-box-${index}`).classList.add('hidden');
+        };
+
+        function checkInterviewComplete() {
+            const userMsgCount = localChatHistory.filter(m => m.role === 'user').length;
+            if (userMsgCount >= 10) {
+                interviewComplete = true;
+                chatForm.classList.add('hidden');
+                setTimeout(() => {
+                    localChatHistory.push({ role: "assistant", text: "Thank you for your time, we will get back to you soon." });
+                    renderChatFeed();
+                    
+                    setTimeout(() => {
+                        document.body.innerHTML = `
+                            <div class="h-screen w-screen bg-[#E8F7F6] flex flex-col items-center justify-center font-['Inter']">
+                                <div class="text-[#1F2540] text-lg sm:text-xl text-center px-4 max-w-lg leading-relaxed">
+                                    Thankyou for your time. Analysis report will be sent to the adminstration
+                                </div>
+                            </div>
+                        `;
+                    }, 3000);
+                }, 1000);
+                return true;
+            }
+            return false;
+        }
+
+        window.saveEdit = async function(index) {
+            const newText = document.getElementById(`edit-input-${index}`).value.trim();
+            if (!newText) return;
+            
+            // Truncate history and replace the message
+            localChatHistory = localChatHistory.slice(0, index);
+            localChatHistory.push({ role: 'user', text: newText });
+            
+            renderChatFeed();
+            if (checkInterviewComplete()) return;
+            
+            await triggerAiResponse();
+        };
+
         chatForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const text = userInput.value.trim();
             if (!text) return;
 
-            // Render User bubble immediately
-            appendMessage('user', text);
             localChatHistory.push({ role: "user", text: text });
             userInput.value = '';
+            userInput.style.height = 'auto'; // Reset height
+            renderChatFeed();
 
-            // Toggle Loading UI
+            if (checkInterviewComplete()) return;
+
+            await triggerAiResponse();
+        });
+
+        async function triggerAiResponse() {
             loadingIndicator.classList.remove('hidden');
             loadingIndicator.classList.add('flex');
             userInput.disabled = true;
+            sendBtn.disabled = true;
 
             try {
-                // Post history context to Express local proxy engine
                 const response = await fetch(`${API_BASE_URL}/api/chat`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -294,70 +425,31 @@
                 }
 
                 if (response.ok) {
-                    // Update state matrix elements dynamically
                     updateDashboard(data);
-
-                    // Render AI Response bubble
-                    appendMessage('assistant', data.natural_analyst_response);
                     localChatHistory.push({ role: "assistant", text: data.natural_analyst_response });
-
-                    if (data.current_question_count >= 10) {
-                        interviewComplete = true;
-                        showInterviewCompletionMessage();
-                        userInput.disabled = true;
-                        document.getElementById('sendBtn').disabled = true;
-                        chatForm.classList.add('hidden');
-                    }
+                    renderChatFeed();
                 } else {
-                    appendMessage('assistant', data.error || "I hit an unexpected disconnect while updating the business operational arrays. Could you please state your problem again?");
+                    localChatHistory.push({ role: "assistant", text: data.error || "I hit an unexpected disconnect. Could you please state your problem again?" });
+                    renderChatFeed();
                 }
             } catch (err) {
                 console.error(err);
-                appendMessage('assistant', "Failed to safely connect to the primary business analytics container server.");
+                localChatHistory.push({ role: "assistant", text: "Failed to safely connect to the primary business analytics container server." });
+                renderChatFeed();
             } finally {
                 loadingIndicator.classList.add('hidden');
                 loadingIndicator.classList.remove('flex');
-                if (!interviewComplete && localChatHistory.length < 21) userInput.disabled = false;
+                if (!interviewComplete && localChatHistory.length < 21) {
+                    userInput.disabled = false;
+                    sendBtn.disabled = false;
+                    userInput.focus();
+                }
+                scrollToBottom();
             }
-        });
-
-        function appendMessage(role, message) {
-            const wrapper = document.createElement('div');
-            wrapper.className = `flex items-start space-x-3 max-w-[85%] ${role === 'user' ? 'ml-auto justify-end' : ''}`;
-
-            const badge = role === 'user' ? '' : '<div class="bg-[#2FB5AA] border border-[#2FB5AA] text-[#1F2540] font-bold p-2 rounded-lg text-xs tracking-wider">Silk</div>';
-            const bubbleBg = 'bg-[#2FB5AA] border border-[#2FB5AA] text-[#000000]';
-
-            wrapper.innerHTML = `
-                ${badge}
-                <div class="${bubbleBg} p-4 rounded-xl text-sm leading-relaxed shadow-sm">
-                    ${message}
-                </div>
-            `;
-            chatFeed.appendChild(wrapper);
-            chatFeed.scrollTop = chatFeed.scrollHeight;
         }
 
-        function appendSystemAlert(text) {
-            const alertDiv = document.createElement('div');
-            alertDiv.className = "text-center text-xs font-semibold bg-[#E8F7F6] border border-dashed border-[#2FB5AA] text-[#1F2540] p-3 rounded-lg mx-auto max-w-lg my-2";
-            alertDiv.innerText = text;
-            chatFeed.appendChild(alertDiv);
-            chatFeed.scrollTop = chatFeed.scrollHeight;
-        }
-
-        function showInterviewCompletionMessage() {
-            chatFeed.innerHTML = `
-                <div class="h-full w-full flex items-center justify-center px-6">
-                    <div class="text-center text-sm sm:text-base text-[#1F2540] max-w-xl">
-                        Thankyou for your time , I will analysis it and comeback to you soon
-                    </div>
-                </div>
-            `;
-        }
 
         function updateDashboard(state) {
-            // Dynamic progression updates for clarity pillars
             const scores = state && state.xray_pillar_clarity_scores ? state.xray_pillar_clarity_scores : null;
             if (!scores || typeof scores !== 'object') {
                 return;
@@ -373,17 +465,20 @@
                 }
             }
 
-            // Render facts list chips securely
             if (state.deduced_operational_facts && state.deduced_operational_facts.length > 0) {
+                state.deduced_operational_facts.forEach(fact => globalDeducedFacts.add(fact));
                 factsContainer.innerHTML = '';
-                state.deduced_operational_facts.forEach(fact => {
+                globalDeducedFacts.forEach(fact => {
                     const factItem = document.createElement('div');
-                    factItem.className = "bg-[#E8F7F6] border border-[#2FB5AA] text-[#1F2540] p-2.5 rounded-md flex items-center space-x-2 font-medium shadow-sm hover:border-[#25A298] transition-all";
+                    factItem.className = "bg-[#E8F7F6] border border-[#2FB5AA] text-[#1F2540] p-2.5 rounded-md flex items-center space-x-2 font-medium shadow-sm hover:border-[#25A298] transition-all mb-2";
                     factItem.innerHTML = `<span class="text-[#2FB5AA] text-base">✓</span> <span>${fact}</span>`;
                     factsContainer.appendChild(factItem);
                 });
             }
         }
+
+        // Render initial message on load
+        renderChatFeed();
     </script>
 </body>
 
