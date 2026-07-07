@@ -58,7 +58,7 @@
     </style>
 </head>
 
-<body class="bg-[#D9E2E7] text-black font-sans h-[100dvh] overflow-hidden flex flex-col">
+<body class="bg-[#D9E2E7] text-black font-sans overflow-hidden flex flex-col" style="height: 100dvh;">
 
     <header class="bg-[#D9E2E7] border-b border-[#2FB5AA] p-4 shadow-sm">
         <div class="max-w-7xl mx-auto flex items-center justify-center">
@@ -243,6 +243,23 @@
 
         window.addEventListener('resize', syncMobileLayout);
         syncMobileLayout();
+
+        // Handle mobile virtual keyboard pushing layout correctly
+        if (window.visualViewport) {
+            function updateViewportHeight() {
+                document.body.style.height = window.visualViewport.height + 'px';
+                window.scrollTo(0, 0); // Prevent browser from scrolling the body
+                scrollToBottom();
+            }
+            window.visualViewport.addEventListener('resize', updateViewportHeight);
+            
+            // Re-apply on focus just to be safe
+            userInput.addEventListener('focus', () => {
+                setTimeout(updateViewportHeight, 100);
+                setTimeout(scrollToBottom, 300);
+            });
+            updateViewportHeight();
+        }
 
         // Auto-expanding text area
         userInput.addEventListener('input', function() {
