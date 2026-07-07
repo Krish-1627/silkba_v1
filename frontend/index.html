@@ -60,14 +60,14 @@
 
 <body class="bg-[#D9E2E7] text-black font-sans overflow-hidden flex flex-col" style="height: 100dvh;">
 
-    <header class="bg-[#D9E2E7] border-b border-[#2FB5AA] p-4 shadow-sm">
+    <header id="mainHeader" class="bg-[#D9E2E7] border-b border-[#2FB5AA] p-4 shadow-sm transition-all duration-200">
         <div class="max-w-7xl mx-auto flex items-center justify-center">
             <h1 class="text-[15px] sm:text-xl font-bold tracking-wide text-black text-center whitespace-nowrap">
                 Silk<span class="text-[#2FB5AA]">Optima</span> Business X-Ray</h1>
         </div>
     </header>
 
-    <div class="lg:hidden bg-[#D9E2E7] border-b border-[#2FB5AA] px-4 pt-3 pb-2">
+    <div id="mobileTabs" class="lg:hidden bg-[#D9E2E7] border-b border-[#2FB5AA] px-4 pt-3 pb-2 transition-all duration-200">
         <div class="max-w-7xl mx-auto grid grid-cols-2 gap-2">
             <button id="tabChatBtn" type="button"
                 class="border rounded-lg py-2 text-sm font-semibold transition-colors bg-[#2FB5AA] text-black border-transparent">
@@ -245,9 +245,24 @@
         syncMobileLayout();
 
         // Handle mobile virtual keyboard pushing layout correctly
+        const mainHeader = document.getElementById('mainHeader');
+        const mobileTabs = document.getElementById('mobileTabs');
+        
         if (window.visualViewport) {
+            const initialHeight = window.visualViewport.height;
+            
             function updateViewportHeight() {
                 document.body.style.height = window.visualViewport.height + 'px';
+                
+                // If height shrank by more than 100px, assume keyboard is open
+                if (window.innerWidth < 1024 && window.visualViewport.height < initialHeight - 100) {
+                    mainHeader.classList.add('hidden');
+                    if(mobileTabs) mobileTabs.classList.add('hidden');
+                } else {
+                    mainHeader.classList.remove('hidden');
+                    if(mobileTabs) mobileTabs.classList.remove('hidden');
+                }
+                
                 window.scrollTo(0, 0); // Prevent browser from scrolling the body
                 scrollToBottom();
             }
